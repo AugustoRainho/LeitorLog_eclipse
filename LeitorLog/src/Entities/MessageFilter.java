@@ -5,24 +5,30 @@ import java.util.ArrayList;
 import java.util.regex.Pattern;
 
 public class MessageFilter {
-    public static List<String> filterStatefieldMessages(List<String> messages) {
+	
+	public static List<String> filterMessages(List<String> messages, List<String> keywords) {
         List<String> filteredMessages = new ArrayList<>();
-        Pattern pattern = Pattern.compile(Pattern.quote("statefield"), Pattern.CASE_INSENSITIVE);
         
         for (int i = 0; i < messages.size(); i++) {
-            if (pattern.matcher(messages.get(i)).find()) {
-                filteredMessages.add(messages.get(i));
-                for (int j = 1; j <= 3; j++) {
-                    if (i + j < messages.size()) {
-                        filteredMessages.add(messages.get(i + j));
-                    } else {
-                        break;
+            for (String keyword : keywords) {
+                if (messages.get(i).toLowerCase().contains(keyword.toLowerCase())) {
+                    filteredMessages.add(messages.get(i));
+                    for (int j = 1; j <= 3; j++) {
+                        if (i + j < messages.size()) {
+                            filteredMessages.add(messages.get(i + j));
+                        } else {
+                            break;
+                        }
                     }
+                    filteredMessages.add("**************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************"); // Add separator
+                    break; // Exit the inner loop and continue with the next message
                 }
-                
-                filteredMessages.add("**************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************"); // Add separator
-
             }
+        }
+
+        // Remove the last separator if present
+        if (!filteredMessages.isEmpty() && "**********".equals(filteredMessages.get(filteredMessages.size() - 1))) {
+            filteredMessages.remove(filteredMessages.size() - 1);
         }
         return filteredMessages;
     }

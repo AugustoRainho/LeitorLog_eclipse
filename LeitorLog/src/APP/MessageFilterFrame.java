@@ -15,9 +15,9 @@ import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
@@ -29,8 +29,12 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 
 import Entities.MessageFilter;
+import Entities.StateFieldParse;
+import Entities.TimeIntervalCheck;
 
 public class MessageFilterFrame extends JFrame {
     private JTextArea textArea;
@@ -40,10 +44,10 @@ public class MessageFilterFrame extends JFrame {
     private JLabel infoLabel;
     private JLabel EneidaLabel;
     private JLabel ioLabel;
-    private JComboBox<String> sellectMess;
-    private JComboBox<String> sellectTime;
-
-
+    private JComboBox<String> selectMess;
+    private JComboBox<String> selectTim;
+    private String SelectMessage = "Select an Option";
+    private String SelectTime = "Select Time";
 
     public MessageFilterFrame() {
         // Set custom background color for JFileChooser
@@ -112,46 +116,79 @@ public class MessageFilterFrame extends JFrame {
         filterButton.setEnabled(false); // Disable filter button initially
         
        //JComboBox para selecionar mensagens e tempo
-        String[] sellectData = {"Sellect Message", "State Field", "Raw Data", "State Alarm"};
-        String[] sellectComm = {"Sellect Time", "1 min", "3 min", "5 min", "10 min", "15 min", "30 min", "60 min", "120 min", "240 min"};
-        
+        String[] selectData = {SelectMessage, "State Field", "Raw Data", "State Alarm"};
+        String[] selectComm = {SelectTime, "1 min", "3 min", "5 min", "10 min", "15 min", "30 min", "60 min", "120 min", "240 min"};      
 
-        sellectMess = new JComboBox<>(sellectData);
-        sellectTime = new JComboBox<>(sellectComm);
-        
-        
-     
+        selectMess = new JComboBox<>(selectData);
+        selectTim = new JComboBox<>(selectComm);
         // Optionally set a default selection
-    
-        sellectMess.setSelectedIndex(0); // Selects the first item by default
-        sellectTime.setSelectedIndex(0); // Selects the first item by default
-
-
+        selectMess.setSelectedIndex(0); // Selects the first item by default
+        selectTim.setSelectedIndex(0); // Selects the first item by default
+        // Add a popup menu listener to hide the initial prompt when showing the options
         
-        checkButton = new JButton("3. Check StateField Messages");
+        selectMess.addPopupMenuListener(new PopupMenuListener() {
+            @Override
+            public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                if (selectMess.getItemAt(0).equals(SelectMessage)) {
+                	selectMess.removeItemAt(0);
+                }
+            }
+            @Override
+            public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+                if (selectMess.getSelectedIndex() == -1 || selectMess.getSelectedItem().equals(SelectMessage)) {
+                	selectMess.insertItemAt(SelectMessage, 0);
+                	selectMess.setSelectedIndex(0);
+                }
+            }
+            @Override
+            public void popupMenuCanceled(PopupMenuEvent e) {
+                if (selectMess.getSelectedIndex() == -1 || selectMess.getSelectedItem().equals(SelectMessage)) {
+                	selectMess.insertItemAt(SelectMessage, 0);
+                	selectMess.setSelectedIndex(0);
+                }
+            }
+        });
+        selectTim.addPopupMenuListener(new PopupMenuListener() {
+            @Override
+            public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+                if (selectTim.getItemAt(0).equals(SelectTime)) {
+                	selectTim.removeItemAt(0);
+                }
+            }
+            @Override
+            public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+                if (selectTim.getSelectedIndex() == -1 || selectTim.getSelectedItem().equals(SelectTime)) {
+                	selectTim.insertItemAt(SelectTime, 0);
+                	selectTim.setSelectedIndex(0);
+                }
+            }
+            @Override
+            public void popupMenuCanceled(PopupMenuEvent e) {
+                if (selectTim.getSelectedIndex() == -1 || selectTim.getSelectedItem().equals(SelectTime)) {
+                	selectTim.insertItemAt(SelectTime, 0);
+                	selectTim.setSelectedIndex(0);
+                }
+            }
+        });
+        
+        checkButton = new JButton("3. Check Interval Messages");
         checkButton.addActionListener(new CheckButtonListener());
         checkButton.setEnabled(false); // Disable filter button initially
-
-        
         //Mostrar botoes
         JPanel panel = new JPanel();
         panel.setBackground(new Color(173, 216, 230)); // Set background color for panel
         panel.add(openButton);
-        panel.add(sellectMess);
-        panel.add(sellectTime);
+        panel.add(selectMess);
+        panel.add(selectTim);
         panel.add(filterButton);
         panel.add(checkButton);
-        sellectMess.setEnabled(false);
-        sellectTime.setEnabled(false);
-
-       
-        
+        selectMess.setEnabled(false);
+        selectTim.setEnabled(false);
 
         setLayout(new BorderLayout());
         add(labelPanel, BorderLayout.NORTH); // Add the label panel to the top
         add(scrollPane, BorderLayout.CENTER);
         add(panel, BorderLayout.SOUTH);      
-        
         
         setVisible(true);
     }
@@ -164,8 +201,6 @@ public class MessageFilterFrame extends JFrame {
             UIManager.put("FileChooser.titlePanel.background", new Color(100, 149, 237)); // Cornflower blue color
             UIManager.put("FileChooser.titlePanel.foreground", Color.BLUE);
             UIManager.put("Panel.background", new Color(173, 216, 230)); // Light blue color
- 
-
         	openButton.setEnabled(false);
             JFileChooser fileChooser = new JFileChooser() {
                 @Override
@@ -175,17 +210,15 @@ public class MessageFilterFrame extends JFrame {
                     return dialog;
                 }
             };
-
             
             int result = fileChooser.showOpenDialog(MessageFilterFrame.this);
             if (result == JFileChooser.APPROVE_OPTION) {
                 File selectedFile = fileChooser.getSelectedFile();
                 loadFile(selectedFile);
             }
-            sellectMess.setEnabled(true);
-            sellectTime.setEnabled(true);
+            selectMess.setEnabled(true);
+            selectTim.setEnabled(true);
             filterButton.setEnabled(true); // enable filter button initially
-
         }
     }
 
@@ -204,67 +237,156 @@ public class MessageFilterFrame extends JFrame {
     private class FilterButtonListener implements ActionListener {
     	
         public void actionPerformed(ActionEvent e) {
- 
-              
-            filterButton.setEnabled(false); // Disable filter button after click
-            sellectMess.setEnabled(true);
-            sellectTime.setEnabled(true);
+            if (selectMess.getSelectedIndex() == 0) {
+                // selectMess.removeItemAt(0);
 
-            String[] messagesArray = textArea.getText().split("\n");
-            List<String> messages = new ArrayList<>(Arrays.asList(messagesArray));
-            List<String> filteredMessages = MessageFilter.filterMessages(messages, Arrays.asList("statefield"));
+                filterButton.setEnabled(false); // Disable filter button after click
+                selectMess.setEnabled(true);
+                selectTim.setEnabled(true);
 
-            textArea.setText("");
-            for (String message : filteredMessages) {
-                textArea.append(message + "\n");
+                String[] messagesArray = textArea.getText().split("\n");
+                List<String> messages = new ArrayList<>(Arrays.asList(messagesArray));
+                Map<String, List<String>> filteredMessagesMap = MessageFilter.filterMessages(messages, Arrays.asList("statefield"));
+
+                List<String> singleLineMessages = filteredMessagesMap.get("singleLineMessages");
+                List<String> threeLineMessages = filteredMessagesMap.get("threeLineMessages");
+
+                // Save filtered messages to MessageHolder or StateFieldParse
+                StateFieldParse.setFilteredMessages(threeLineMessages); // Assuming you want to save three-line messages
+
+                // Clear the text area and display filtered messages
+                textArea.setText("");
+                for (String message : threeLineMessages) {
+                    textArea.append(message + "\n");
+
+                    // Extract and print the date and time
+                    String dateTime = StateFieldParse.extractDateTime(message);
+                    if (dateTime != null) {
+                        // Print only the first line
+                        String firstLine = dateTime.split("\n")[0];
+                        System.out.println(firstLine);
+                    }
+                 //   System.out.println(message);
+	            }
+	            selectMess.setEnabled(false);
+	            selectTim.setEnabled(false);
+	        	checkButton.setEnabled(true);
             }
-            sellectMess.setEnabled(false);
-            sellectTime.setEnabled(false);
-        	checkButton.setEnabled(true);
-        	
+            if (selectMess.getSelectedIndex() == 1) {
+                // selectMess.removeItemAt(0);
 
+                filterButton.setEnabled(false); // Disable filter button after click
+                selectMess.setEnabled(true);
+                selectTim.setEnabled(true);
+
+                String[] messagesArray = textArea.getText().split("\n");
+                List<String> messages = new ArrayList<>(Arrays.asList(messagesArray));
+                Map<String, List<String>> filteredMessagesMap = MessageFilter.filterMessages(messages, Arrays.asList("fullrawdata"));
+
+                List<String> singleLineMessages = filteredMessagesMap.get("singleLineMessages");
+                List<String> threeLineMessages = filteredMessagesMap.get("threeLineMessages");
+
+                // Save filtered messages to MessageHolder or StateFieldParse
+                StateFieldParse.setFilteredMessages(threeLineMessages); // Assuming you want to save three-line messages
+
+                // Clear the text area and display filtered messages
+                textArea.setText("");
+                for (String message : threeLineMessages) {
+                    textArea.append(message + "\n");
+
+                    // Extract and print the date and time
+                    String dateTime = StateFieldParse.extractDateTime(message);
+                    if (dateTime != null) {
+                        // Print only the first line
+                        String firstLine = dateTime.split("\n")[0];
+                        System.out.println(firstLine);
+                    }
+                 //   System.out.println(message);
+	            }
+	            selectMess.setEnabled(false);
+	            selectTim.setEnabled(false);
+	        	checkButton.setEnabled(true);
+            }
+            if (selectMess.getSelectedIndex() == 2) {
+                // selectMess.removeItemAt(0);
+
+                filterButton.setEnabled(false); // Disable filter button after click
+                selectMess.setEnabled(true);
+                selectTim.setEnabled(true);
+
+                String[] messagesArray = textArea.getText().split("\n");
+                List<String> messages = new ArrayList<>(Arrays.asList(messagesArray));
+                Map<String, List<String>> filteredMessagesMap = MessageFilter.filterMessages(messages, Arrays.asList("state/alarmstatus"));
+
+                List<String> singleLineMessages = filteredMessagesMap.get("singleLineMessages");
+                List<String> threeLineMessages = filteredMessagesMap.get("threeLineMessages");
+
+                // Save filtered messages to MessageHolder or StateFieldParse
+                StateFieldParse.setFilteredMessages(threeLineMessages); // Assuming you want to save three-line messages
+
+                // Clear the text area and display filtered messages
+                textArea.setText("");
+                for (String message : threeLineMessages) {
+                    textArea.append(message + "\n");
+
+                    // Extract and print the date and time
+                    String dateTime = StateFieldParse.extractDateTime(message);
+                    if (dateTime != null) {
+                        // Print only the first line
+                        String firstLine = dateTime.split("\n")[0];
+                        System.out.println(firstLine);
+                    }
+                 //   System.out.println(message);
+	            }
+	            selectMess.setEnabled(false);
+	            selectTim.setEnabled(false);
+	        	checkButton.setEnabled(true);
+            }
         }
- 
     }
     	
     private class CheckButtonListener implements ActionListener {
-        
+
     	public void actionPerformed(ActionEvent e) {
-   
             checkButton.setEnabled(false);
 
-            String[] options = {"Resp : (200)", "Comm_Interval", "Outra Opção", "Mais uma Opção"}; // Exemplo de opções
-            List<String> selectedKeywords = new ArrayList<>();
-
-            // Mostra uma caixa de diálogo para selecionar múltiplas opções
-            JPanel panel = new JPanel(new GridLayout(options.length, 1));
-            JCheckBox[] checkBoxes = new JCheckBox[options.length];
-            for (int i = 0; i < options.length; i++) {
-                checkBoxes[i] = new JCheckBox(options[i]);
-                panel.add(checkBoxes[i]);
-                //System.out.println("tou aqui");
-
+            String selectedInterval = (String) selectTim.getSelectedItem();
+            if ("SelectTime".equals(selectedInterval)) {
+                System.out.println("Please select a valid interval.");
+                return;
             }
+            int intervalMinutes = Integer.parseInt(selectedInterval.split(" ")[0]);
+            List<String> filteredMessages = StateFieldParse.getFilteredMessages();
+            if (filteredMessages != null && !filteredMessages.isEmpty()) {
+                for (String message : filteredMessages) {
+                    String dateTime = StateFieldParse.extractDateTime(message);
 
-            // Exibe a caixa de diálogo
-            int result = JOptionPane.showConfirmDialog(null, panel, "Filtrar StateField por:", JOptionPane.OK_CANCEL_OPTION);
-            if (result == JOptionPane.OK_OPTION) {
-                for (JCheckBox checkBox : checkBoxes) {
-                    if (checkBox.isSelected()) {
-                        selectedKeywords.add(checkBox.getText());
-                        //System.out.println("tou aqui");
+                    if (dateTime != null) {
+                        String[] lines = dateTime.split("\n");
+                        if (lines.length > 0) {
+                            String firstLine = lines[0].trim(); // Get the first line and trim whitespace
+                            if (firstLine.length() >= 19) {
+                                String hour = firstLine.substring(11, 19); // Extract the HH:mm:ss part
 
+                                if (TimeIntervalCheck.isIntervalMatch(hour, intervalMinutes)) {
+                                    System.out.println("Time " + hour + " matches the " + intervalMinutes + "-minute interval.");
+                                } else {
+                                    System.out.println("Time " + hour + " does NOT match the " + intervalMinutes + "-minute interval.");
+                                    TimeIntervalCheck.highlightIncorrectTime(textArea, firstLine);
+
+                                }
+                            } else {
+                                System.out.println("Invalid date-time format in message: " + firstLine);
+                            }
+                        }
                     }
                 }
-
-                if (!selectedKeywords.isEmpty()) {
-                    // Aqui você pode usar as palavras-chave selecionadas para alguma ação
-                    System.out.println("Palavras-chave selecionadas: " + selectedKeywords);
-                } else {
-                    JOptionPane.showMessageDialog(null, "Nenhuma palavra-chave selecionada.", "Informação", JOptionPane.INFORMATION_MESSAGE);
-                }
+            } else {
+                System.out.println("No filtered messages to check.");
             }
         }
-    	  	
     }
+    	
+
+
 }

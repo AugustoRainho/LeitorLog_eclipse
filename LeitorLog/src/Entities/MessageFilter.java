@@ -1,36 +1,42 @@
 package Entities;
 
-import java.util.List;
 import java.util.ArrayList;
-import java.util.regex.Pattern;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MessageFilter {
-	
-	public static List<String> filterMessages(List<String> messages, List<String> keywords) {
-        List<String> filteredMessages = new ArrayList<>();
-        
+
+    public static Map<String, List<String>> filterMessages(List<String> messages, List<String> keywords) {
+        List<String> singleLineMessages = new ArrayList<>();
+        List<String> threeLineMessages = new ArrayList<>();
+
         for (int i = 0; i < messages.size(); i++) {
             for (String keyword : keywords) {
                 if (messages.get(i).toLowerCase().contains(keyword.toLowerCase())) {
-                    filteredMessages.add(messages.get(i));
+                    singleLineMessages.add(messages.get(i));
+                    StringBuilder threeLines = new StringBuilder(messages.get(i));
                     for (int j = 1; j <= 3; j++) {
                         if (i + j < messages.size()) {
-                            filteredMessages.add(messages.get(i + j));
+                            threeLines.append("\n").append(messages.get(i + j));
                         } else {
                             break;
                         }
                     }
-                    filteredMessages.add("**************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************"); // Add separator
+                    threeLines.append("\n").append("**************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************");
+                    threeLineMessages.add(threeLines.toString());
                     break; // Exit the inner loop and continue with the next message
                 }
             }
         }
 
-        // Remove the last separator if present
-        if (!filteredMessages.isEmpty() && "**********".equals(filteredMessages.get(filteredMessages.size() - 1))) {
-            filteredMessages.remove(filteredMessages.size() - 1);
-        }
-        return filteredMessages;
+        Map<String, List<String>> result = new HashMap<>();
+        result.put("singleLineMessages", singleLineMessages);
+        result.put("threeLineMessages", threeLineMessages);
+        
+        
+		return result;
+
+    
     }
 }
-

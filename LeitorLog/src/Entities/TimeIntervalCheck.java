@@ -10,17 +10,22 @@ import javax.swing.text.Highlighter;
 
 public class TimeIntervalCheck {
 
-
     public static boolean isIntervalMatch(String time, int intervalMinutes) {
-        // Parse the time string into LocalTime
-        LocalTime localTime = LocalTime.parse(time);
+        try {
+            // Parse the time string into LocalTime
+            LocalTime localTime = LocalTime.parse(time);
 
-        // Calculate minutes from the start of the day
-        int minutesOfDay = localTime.toSecondOfDay() / 60;
+            // Calculate minutes from the start of the day
+            int minutesOfDay = localTime.toSecondOfDay() / 60;
 
-        // Check if the minutes since midnight is divisible by the interval
-        return minutesOfDay % intervalMinutes == 0;
+            // Check if the minutes since midnight is divisible by the interval
+            return minutesOfDay % intervalMinutes == 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
+
     public static void highlightIncorrectTime(JTextArea textArea, String line) {
         // Get the current text from the JTextArea
         String text = textArea.getText();

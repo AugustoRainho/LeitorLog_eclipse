@@ -2,7 +2,6 @@ package APP;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -12,7 +11,6 @@ import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -387,7 +385,115 @@ public class MessageFilterFrame extends JFrame {
         }
     } */
 
+    public class CheckButtonListener implements ActionListener {
+        private JButton checkButton;
+        private JTextArea textPane;
 
+        public CheckButtonListener(JButton checkButton, JTextArea textArea) {
+            this.checkButton = checkButton;
+            this.textPane = textArea;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            checkButton.setEnabled(false);
+            StringBuilder incorrectTimes = new StringBuilder();
+            List<String> filteredMessages = StateFieldParse.getFilteredMessages();
+
+            if (filteredMessages == null || filteredMessages.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "No filtered messages to check.", "Info", JOptionPane.INFORMATION_MESSAGE);
+                checkButton.setEnabled(true);
+                return;
+            }
+
+            // Clear text pane and prepare to append messages
+            textPane.setText("");
+            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+            LocalTime previousTime = null;
+            boolean firstMessage = true;
+
+            for (String message : filteredMessages) {
+                String timeString = StateFieldParse.extractTime(message);
+
+                if (timeString != null) {
+                    LocalTime messageTime = LocalTime.parse(timeString, timeFormatter);
+
+                    if (!firstMessage) {
+                        long minutesDifference = ChronoUnit.MINUTES.between(previousTime, messageTime);
+
+                        if (minutesDifference > 5) {
+                            appendColoredText(textPane, message, Color.RED);
+                            incorrectTimes.append(message).append("\n");
+                        } else {
+                            appendColoredText(textPane, message, Color.BLACK);
+                        }
+                    } else {
+                        appendColoredText(textPane, message, Color.BLACK);
+                        firstMessage = false;
+                    }
+                    previousTime = messageTime;
+                } else {
+                    textPane.append(message + "\n");
+                }
+            }
+
+            // Save all filtered messages to a log file
+      
+
+            List<String> filteredMessagesLOG = MessageFilter.filterMessages(filteredMessagesLog);
+            
+        
+            LogExporter.saveFilteredMessagesToLogFile(filteredMessagesLOG);
+
+            // Save incorrect messages to a log file
+            if (incorrectTimes.length() > 0) {
+                List<String> incorrectMessagesList = new ArrayList<>();
+                for (String line : incorrectTimes.toString().split("\n")) {
+                    incorrectMessagesList.add(line);
+                }
+                LogExporter.saveIncorrectMessagesToLogFile(incorrectMessagesList);
+
+                // Show a popup with messages outside the 5-minute interval, if any
+                JTextArea resultTextArea = new JTextArea("Messages outside the 5-minute interval:\n\n" + incorrectTimes.toString());
+                resultTextArea.setEditable(false);
+                resultTextArea.setLineWrap(true);
+                resultTextArea.setWrapStyleWord(true);
+
+                JScrollPane scrollPane = new JScrollPane(resultTextArea);
+                scrollPane.setPreferredSize(new Dimension(400, 200));
+
+                Object[] options = {"Close", "Copy Messages to Log File"};
+                int result = JOptionPane.showOptionDialog(null, scrollPane, "Log File Creation Result", JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION, null, options, options[0]);
+
+                if (result == 1) {
+                    JOptionPane.showMessageDialog(null, "Messages copied to log file 'Incorrect_Messages.log'.", "Info", JOptionPane.INFORMATION_MESSAGE);
+                }
+            } else {
+                JOptionPane.showMessageDialog(null, "All messages are within the 5-minute interval.", "Info", JOptionPane.INFORMATION_MESSAGE);
+            }
+
+            checkButton.setEnabled(true);
+        }
+
+        private void appendColoredText(JTextArea textArea, String text, Color color) {
+            Document doc = textArea.getDocument();
+            try {
+                if (doc instanceof PlainDocument) {
+                    textArea.getDocument().insertString(doc.getLength(), text + "\n", null);
+                }
+            } catch (BadLocationException ex) {
+                ex.printStackTrace();
+            }
+            textArea.append(text + "\n");
+            textArea.setForeground(color);
+        }
+    }
+    
+    
+    
+    
+    
+    /*
     public class CheckButtonListener implements ActionListener {
         private JButton checkButton;
         private JTextArea textPane;
@@ -418,23 +524,46 @@ public class MessageFilterFrame extends JFrame {
 
             for (String message : filteredMessages) {
                 // Check if the message contains a URL
-                boolean containsURL = message.contains("http://") || message.contains("https://");
+                boolean containsURL = message.contains("statefield") || message.contains("state/field");
 
                 if (containsURL) {
                     // Append separator before URL messages
                     appendSeparator(textPane);
+                
                 }
-
                 String timeString = StateFieldParse.extractTime(message);
                 if (timeString != null) {
                     LocalTime messageTime = LocalTime.parse(timeString, timeFormatter);
 
                     if (!firstMessage) {
                         long minutesDifference = ChronoUnit.MINUTES.between(previousTime, messageTime);
-                        if (minutesDifference >= 5) {
+                        
+                        int minutos = messageTime.getMinute();
+                        if (minutos == 0 || minutos == 5 && minutesDifference == 5) {
+                            System.out.println("Os minutos são 0 ou 5.");
+                            appendColoredText(textPane, message, Color.BLACK);
+                        } else {
+                            System.out.println("Os minutos não são 0 ou 5.");
+                            appendColoredText(textPane, message, Color.RED);
+                            
+                            incorrectTimes.append(messageTime).append("\n");
+                            
+                            
+                        }
+                        
+                        
+                        
+                        
+                  /*      if (minutesDifference > 5 ||  minutesDifference < 5) {
+                        //if (minutesDifference % 5 != 0) {
+
                             appendColoredText(textPane, message, Color.RED);
                             incorrectTimes.append(timeString).append("\n");
-                        } else {
+                           // System.out.println(minutesDifference);
+                           // System.out.println(timeString);
+
+                            
+                        } else{
                             appendColoredText(textPane, message, Color.BLACK);
                         }
                     } else {
@@ -492,9 +621,9 @@ public class MessageFilterFrame extends JFrame {
         private void appendSeparator(JTextArea textArea) {
             textArea.append("-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
         }
-    }
+    }*/
 
-    
+ 
 
     
     

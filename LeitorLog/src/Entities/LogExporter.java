@@ -1,33 +1,32 @@
 package Entities;
-
-import javax.swing.*;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 
-
-
 public class LogExporter {
 
-    public static void saveMessagesToLogFile(List<String> messages, boolean includeSeparator) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("StateField_With_Errors.log"))) {
+    // Method to save all filtered messages to a log file
+    public static void saveFilteredMessagesToLogFile(List<String> filteredMessages) {
+        saveMessagesToLogFile(filteredMessages, "Filtered_Messages.log");
+    }
+
+    // Method to save incorrect messages (outside 5-minute interval) to a log file
+    public static void saveIncorrectMessagesToLogFile(List<String> incorrectMessages) {
+        saveMessagesToLogFile(incorrectMessages, "Incorrect_Messages.log");
+    }
+
+    // Generic method to save messages to a log file
+    private static void saveMessagesToLogFile(List<String> messages, String fileName) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
             for (String message : messages) {
-                if (includeSeparator) {
-                    writer.write("--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
-                    writer.newLine();
-                }
                 writer.write(message);
                 writer.newLine();
             }
-            JOptionPane.showMessageDialog(null, "Log file created successfully.", "Info", JOptionPane.INFORMATION_MESSAGE);
+            System.out.println("Log file " + fileName + " created successfully.");
         } catch (IOException e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Error creating log file: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            System.err.println("Error creating log file " + fileName + ": " + e.getMessage());
         }
-    }
-
-    public static void saveMessagesToLogFile(List<String> filteredMessagesLog) {
-        // Method stub (not used in this context)
     }
 }
